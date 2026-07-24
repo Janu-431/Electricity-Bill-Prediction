@@ -17,5 +17,14 @@ Technologies Used
 - Pandas
 - NumPy
 
+Screenshots
+Home Page
+
+- The home page introduces the application and provides users with a clean interface to access the electricity bill prediction system.
+
+Bill Prediction Dashboard
+
+- Users can enter their electricity usage details and receive an estimated electricity bill instantly. The dashboard also displays useful energy-saving tips and additional information.
+
 
 
