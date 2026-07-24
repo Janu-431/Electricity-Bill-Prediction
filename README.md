@@ -3,6 +3,7 @@
 ElectriCalo is a Machine Learning-based web application that predicts monthly electricity bills based on user electricity usage. Users can enter details such as units consumed, number of appliances, and hours used per day to get an instant bill prediction through a simple and interactive interface.
 
 Features
+
 - Instant electricity bill prediction
 - User-friendly dashboard
 - Machine Learning-powered prediction
@@ -10,6 +11,7 @@ Features
 - Dataset Explorer
 
 Technologies Used
+
 - Python
 - Flask
 - HTML, CSS, JavaScript
@@ -18,6 +20,7 @@ Technologies Used
 - NumPy
 
 Screenshots
+
 Home Page
 
 - The home page introduces the application and provides users with a clean interface to access the electricity bill prediction system.
