@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ElectriCalc — Smart Bill Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Variables ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0e1a;
+      --bg2:       #0f1526;
+      --bg3:       #141c30;
+      --card:      #141c32;
+      --border:    rgba(255,255,255,0.07);
+      --accent:    #f5a623;
+      --accent2:   #e8791c;
+      --teal:      #00d4aa;
+      --red:       #ff4d6d;
+      --text:      #e8eaf2;
+      --muted:     #6b7394;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --glow:      0 0 40px rgba(245,166,35,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grid ───────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(245,166,35,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,166,35,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Nav ───────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(10,14,26,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: var(--font-head);
+      font-size: 1.5rem; font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--text); }
+    .nav-links { display: flex; gap: 8px; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 8px 18px;
+      border-radius: 8px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+    }
+
+    /* ── Section wrapper ───────────────────────────────────── */
+    .page { display: none; position: relative; z-index: 1; }
+    .page.active { display: block; }
+
+    /* ── Hero ──────────────────────────────────────────────── */
+    .hero {
+      padding: 80px 48px 40px;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,166,35,0.1);
+      border: 1px solid rgba(245,166,35,0.25);
+      color: var(--accent);
+      font-size: 0.78rem; font-weight: 500; letter-spacing: 1px;
+      padding: 6px 14px; border-radius: 100px;
+      text-transform: uppercase; margin-bottom: 28px;
+    }
+    .hero h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+    .hero h1 .highlight { color: var(--accent); }
+    .hero p {
+      color: var(--muted);
+      font-size: 1.05rem; line-height: 1.7;
+      max-width: 540px; margin-bottom: 48px;
+    }
+
+    /* ── Main grid ─────────────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 24px;
+      max-width: 1100px; margin: 0 auto;
+      padding: 0 48px 80px;
+    }
+
+    /* ── Card ──────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+    }
+    .card-title {
+      font-family: var(--font-head);
+      font-size: 1.15rem; font-weight: 700;
+      margin-bottom: 28px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-title .icon {
+      width: 36px; height: 36px;
+      background: rgba(245,166,35,0.12);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+
+    /* ── Form ──────────────────────────────────────────────── */
+    .field { margin-bottom: 24px; }
+    .field label {
+      display: block;
+      font-size: 0.82rem; font-weight: 500;
+      color: var(--muted); letter-spacing: 0.5px;
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-wrap .unit-label {
+      position: absolute; right: 16px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted); font-size: 0.82rem;
+      pointer-events: none;
+    }
+    input[type="number"] {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 50px 14px 18px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,166,35,0.12);
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    /* ── Range slider ──────────────────────────────────────── */
+    .range-row {
+      display: flex; gap: 16px; align-items: center;
+    }
+    .range-row input[type="number"] { flex: 1; }
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(245,166,35,0.5);
+    }
+
+    /* ── Submit button ─────────────────────────────────────── */
+    .btn-predict {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0a0e1a;
+      font-family: var(--font-head);
+      font-size: 1rem; font-weight: 700;
+      border: none; border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      letter-spacing: 0.5px;
+    }
+    .btn-predict:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(245,166,35,0.35);
+    }
+    .btn-predict:active { transform: translateY(0); }
+    .btn-predict.loading { opacity: 0.7; cursor: not-allowed; }
+
+    /* ── Result panel ──────────────────────────────────────── */
+    #result-panel {
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.4s, transform 0.4s;
+      margin-top: 24px;
+    }
+    #result-panel.show { opacity: 1; transform: translateY(0); }
+
+    .result-amount {
+      font-family: var(--font-head);
+      font-size: 3rem; font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .result-label { color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+    .result-category {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 100px;
+      font-size: 0.8rem; font-weight: 500;
+      margin-top: 14px;
+    }
+    .cat-low  { background: rgba(0,212,170,0.12); color: var(--teal); border: 1px solid rgba(0,212,170,0.2); }
+    .cat-med  { background: rgba(245,166,35,0.12); color: var(--accent); border: 1px solid rgba(245,166,35,0.2); }
+    .cat-high { background: rgba(255,77,109,0.12); color: var(--red); border: 1px solid rgba(255,77,109,0.2); }
+
+    /* ── Stats sidebar ─────────────────────────────────────── */
+    .stats-col { display: flex; flex-direction: column; gap: 18px; }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .stat-num {
+      font-family: var(--font-head);
+      font-size: 2rem; font-weight: 800;
+      color: var(--accent);
+    }
+    .stat-desc { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+
+    /* ── Tips ──────────────────────────────────────────────── */
+    .tip-list { list-style: none; }
+    .tip-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem; color: var(--muted);
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .tip-list li:last-child { border-bottom: none; }
+    .tip-list li::before { content: '⚡'; font-size: 0.8rem; margin-top: 2px; }
+
+    /* ── Dataset page ──────────────────────────────────────── */
+    .dataset-page { padding: 60px 48px; max-width: 1100px; margin: 0 auto; }
+    .dataset-header {
+      margin-bottom: 36px;
+    }
+    .dataset-header h2 {
+      font-family: var(--font-head);
+      font-size: 2rem; font-weight: 800; margin-bottom: 10px;
+    }
+    .dataset-header p { color: var(--muted); font-size: 0.95rem; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%; border-collapse: collapse;
+    }
+    thead tr {
+      background: rgba(245,166,35,0.08);
+    }
+    th {
+      padding: 14px 20px;
+      text-align: left;
+      font-family: var(--font-head);
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.8px; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-top: 1px solid var(--border);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+    tbody tr:hover { background: rgba(255,255,255,0.04); }
+    td {
+      padding: 14px 20px;
+      font-size: 0.92rem; color: var(--text);
+    }
+    td.id-cell { color: var(--accent); font-weight: 600; }
+    .badge {
+      display: inline-block; padding: 3px 10px;
+      border-radius: 100px; font-size: 0.75rem; font-weight: 500;
+    }
+
+    /* ── Modal ─────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      width: 90%; max-width: 480px;
+      position: relative;
+      animation: pop 0.25s ease;
+    }
+    @keyframes pop {
+      from { transform: scale(0.92); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .modal-close {
+      position: absolute; top: 18px; right: 20px;
+      background: none; border: none; color: var(--muted);
+      font-size: 1.4rem; cursor: pointer; line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal h3 {
+      font-family: var(--font-head);
+      font-size: 1.4rem; font-weight: 800; margin-bottom: 28px;
+      color: var(--accent);
+    }
+    .detail-row {
+      display: flex; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key { color: var(--muted); }
+    .detail-val { font-weight: 500; }
+
+    /* ── Utility ───────────────────────────────────────────── */
+    .sep { height: 1px; background: var(--border); margin: 20px 0; }
+
+    @media (max-width: 860px) {
+      nav { padding: 14px 20px; }
+      .hero { padding: 50px 20px 30px; }
+      .main-grid { grid-template-columns: 1fr; padding: 0 20px 60px; }
+      .dataset-page { padding: 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">⚡ Electri<span>Calc</span></div>
+  <div class="nav-links">
+    <a class="active" onclick="showPage('predictor', this)">Bill Predictor</a>
+    <a onclick="showPage('dataset', this)">Dataset Explorer</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 1 — PREDICTOR
+════════════════════════════════════════════ -->
+<div class="page active" id="page-predictor">
+  <div class="hero">
+    <div class="hero-badge">⚡ AI-Powered Prediction</div>
+    <h1>Predict Your<br><span class="highlight">Electricity Bill</span><br>Instantly</h1>
+    <p>Enter your usage details below and our trained ML model will estimate your monthly electricity cost with high accuracy.</p>
+  </div>
+
+  <div class="main-grid">
+    <!-- Left: Form -->
+    <div>
+      <div class="card">
+        <div class="card-title">
+          <div class="icon">🔌</div> Usage Details
+        </div>
+
+        <div class="field">
+          <label>Units Consumed (kWh)</label>
+          <div class="input-wrap">
+            <input type="number" id="units" placeholder="e.g. 250" min="0" step="1"/>
+            <span class="unit-label">kWh</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Number of Appliances</label>
+          <div class="range-row">
+            <input type="number" id="appliances" placeholder="e.g. 6" min="1" max="30"/>
+            <input type="range" id="appliances-range" min="1" max="30" value="6"
+              oninput="document.getElementById('appliances').value=this.value"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Hours Used Per Day</label>
+          <div class="range-row">
+            <input type="number" id="hours" placeholder="e.g. 8" min="1" max="24"/>
+            <input type="range" id="hours-range" min="1" max="24" value="8"
+              oninput="document.getElementById('hours').value=this.value"/>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <button class="btn-predict" id="predict-btn" onclick="predictBill()">
+          ⚡ Calculate Electricity Bill
+        </button>
+
+        <!-- Result -->
+        <div id="result-panel">
+          <div class="sep"></div>
+          <div style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+            <div>
+              <div class="result-amount" id="result-amount">₹0</div>
+              <div class="result-label">Estimated Monthly Bill</div>
+            </div>
+            <div id="result-category" class="result-category"></div>
+          </div>
+          <div style="margin-top:20px; padding:16px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid var(--border); font-size:0.88rem; color:var(--muted);" id="result-breakdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Stats + Tips -->
+    <div class="stats-col">
+      <div class="stat-card">
+        <div class="stat-num">₹3.50</div>
+        <div class="stat-desc">Average cost per unit (kWh)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">35%</div>
+        <div class="stat-desc">Savings possible with smart usage</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">5-Star</div>
+        <div class="stat-desc">Rating reduces bill by ~20%</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="icon">💡</div> Energy Saving Tips
+        </div>
+        <ul class="tip-list">
+          <li>Switch to LED bulbs — use 80% less energy</li>
+          <li>Unplug appliances when not in use</li>
+          <li>Set AC at 24–26°C for optimal efficiency</li>
+          <li>Use washing machine with full loads only</li>
+          <li>Natural light during daytime hours</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 2 — DATASET
+════════════════════════════════════════════ -->
+<div class="page" id="page-dataset">
+  <div class="dataset-page">
+    <div class="dataset-header">
+      <h2>📊 Electricity Bill Dataset</h2>
+      <p>Click any row to view the full details of that customer record.</p>
+    </div>
+    <div class="table-wrap">
+      <table id="dataset-table">
+        <thead>
+          <tr>
+            <th>Customer ID</th>
+            <th>Units (kWh)</th>
+            <th>Appliances</th>
+            <th>Hrs / Day</th>
+            <th>Bill (₹)</th>
+            <th>Category</th>
+          </tr>
+        </thead>
+        <tbody id="dataset-body">
+          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('open')">✕</button>
+    <h3 id="modal-title">Customer Record</h3>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ── Navigation ──────────────────────────────────────────────
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'dataset') loadDataset();
+}
+
+// ── Sync range sliders ─────────────────────────────────────
+document.getElementById('appliances').addEventListener('input', function () {
+  document.getElementById('appliances-range').value = this.value;
+});
+document.getElementById('hours').addEventListener('input', function () {
+  document.getElementById('hours-range').value = this.value;
+});
+
+// ── Predict ────────────────────────────────────────────────
+async function predictBill() {
+  const units      = parseFloat(document.getElementById('units').value);
+  const appliances = parseFloat(document.getElementById('appliances').value);
+  const hours      = parseFloat(document.getElementById('hours').value);
+
+  if (!units || !appliances || !hours || units < 0 || appliances < 1 || hours < 1) {
+    alert('Please fill in all fields with valid values.');
+    return;
+  }
+
+  const btn = document.getElementById('predict-btn');
+  btn.classList.add('loading');
+  btn.textContent = '⏳ Calculating...';
+
+  try {
+    const res = await fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ units, appliances, hours })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      document.getElementById('result-amount').textContent = '₹' + data.bill.toLocaleString('en-IN');
+
+      const catEl  = document.getElementById('result-category');
+      const catMap = { Low: ['cat-low','🟢 Low Usage'], Medium: ['cat-med','🟡 Medium Usage'], High: ['cat-high','🔴 High Usage'] };
+      const [cls, label] = catMap[data.category] || ['cat-med','Usage'];
+      catEl.className = 'result-category ' + cls;
+      catEl.textContent = label;
+
+      document.getElementById('result-breakdown').innerHTML =
+        `<strong style="color:var(--text)">Breakdown:</strong><br>
+         📦 ${units} kWh × ₹3.50 base rate &nbsp;|&nbsp;
+         🔌 ${appliances} appliances × ${hours} hrs/day &nbsp;|&nbsp;
+         📋 Fixed charges included`;
+
+      document.getElementById('result-panel').classList.add('show');
+    } else {
+      alert('Prediction error: ' + data.error);
+    }
+  } catch (e) {
+    alert('Server error. Make sure Flask is running.');
+  }
+
+  btn.classList.remove('loading');
+  btn.textContent = '⚡ Calculate Electricity Bill';
+}
+
+// ── Dataset ────────────────────────────────────────────────
+async function loadDataset() {
+  try {
+    const res  = await fetch('/dataset');
+    const rows = await res.json();
+    const tbody = document.getElementById('dataset-body');
+    tbody.innerHTML = '';
+    const catCls = { Low: 'cat-low', Medium: 'cat-med', Med: 'cat-med', High: 'cat-high' };
+
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.onclick = () => openModal(r['Customer ID']);
+      tr.innerHTML = `
+        <td class="id-cell">${r['Customer ID']}</td>
+        <td>${r['Units Consumed']}</td>
+        <td>${r['No. of Appliances']}</td>
+        <td>${r['Hours / Day']}</td>
+        <td><strong>₹${r['Bill Amount (₹)'].toLocaleString('en-IN')}</strong></td>
+        <td><span class="badge ${catCls[r['Category']] || 'cat-med'}">${r['Category']}</span></td>`;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    document.getElementById('dataset-body').innerHTML =
+      '<tr><td colspan="6" style="text-align:center;color:var(--red);padding:30px">Failed to load dataset.</td></tr>';
+  }
+}
+
+// ── Modal ──────────────────────────────────────────────────
+async function openModal(id) {
+  const res  = await fetch('/dataset/' + id);
+  const data = await res.json();
+
+  document.getElementById('modal-title').textContent = '📋 ' + id;
+  const fields = [
+    ['Customer ID',      data['Customer ID']],
+    ['Units Consumed',   data['Units Consumed'] + ' kWh'],
+    ['Appliances',       data['No. of Appliances']],
+    ['Hours / Day',      data['Hours / Day'] + ' hrs'],
+    ['Bill Amount',      '₹' + data['Bill Amount (₹)'].toLocaleString('en-IN')],
+    ['Category',         data['Category']],
+  ];
+  document.getElementById('modal-body').innerHTML = fields.map(([k,v]) =>
+    `<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`
+  ).join('');
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+</script>
+</body>
+</html>
